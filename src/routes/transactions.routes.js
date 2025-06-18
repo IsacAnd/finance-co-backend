@@ -1,11 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const Transaction = require("../models/Transaction");
+const authMiddleware = require("../middleware/authMiddleware");
+
+// middleware para proteção de rotas
+router.use(authMiddleware);
 
 // Buscar todas as transações
 router.get("/", async (req, res) => {
   try {
-    const transactions = await Transaction.find().sort({ date: -1 });
+    const transactions = await Transaction.find({ user: req.userId }).sort({
+      date: -1,
+    });
 
     res.status(200).json(transactions);
   } catch (error) {
@@ -13,13 +19,18 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Buscar uma transação por id
-router.get("/:id", async (req, res) => {
+// Deletar uma transação por id
+router.delete("/:id", async (req, res) => {
   try {
-    const id = req.params.id;
-    const transaction = await Transaction.findById(id);
+    const deleted = await Transaction.findByIdAndDelete({
+      _id: req.params.id,
+      user: req.userId,
+    });
 
-    res.status(200).json(transaction);
+    if (!deleted)
+      return res.status(404).json({ error: "Transação não encontrada." });
+
+    res.status(200).json({ message: "Transação deletada com sucesso." });
   } catch (error) {
     res.status(500).send(error.message);
   }
@@ -29,7 +40,12 @@ router.get("/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const { description, amount, type } = req.body;
-    const newTransaction = new Transaction({ description, amount, type });
+    const newTransaction = new Transaction({
+      description,
+      amount,
+      type,
+      user: req.userId,
+    });
     await newTransaction.save();
     res.status(201).json(newTransaction);
   } catch (error) {
@@ -37,14 +53,25 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Deletar uma transação por id
-router.delete("/:id", async (req, res) => {
+router.get("/balance", async (req, res) => {
   try {
-    const id = req.params.id;
-    await Transaction.findByIdAndDelete(id);
-    res.status(200).json({ message: "Transação deletada com sucesso!" });
+    const userTransactions = await Transaction.find({ user: req.userId });
+
+    const balance = userTransactions.reduce(
+      (acc, transaction) => {
+        if (transaction.type === "income") acc.income += transaction.amount;
+        else if (transaction.type === "expense")
+          acc.expense += transaction.amount;
+
+        acc.total = acc.income - acc.expense;
+        return acc;
+      },
+      { income: 0, expense: 0, total: 0 }
+    );
+
+    res.status(200).json(balance);
   } catch (error) {
-    res.status(500).send(message.error);
+    res.status(400).json({ message: error.message });
   }
 });
 
