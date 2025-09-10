@@ -60,8 +60,7 @@ router.get("/balance", async (req, res) => {
     const balance = userTransactions.reduce(
       (acc, transaction) => {
         if (transaction.type === "income") acc.income += transaction.amount;
-        else if (transaction.type === "expense")
-          acc.expense += transaction.amount;
+        else if (transaction.type === "expense") acc.expense += transaction.amount;
 
         acc.total = acc.income - acc.expense;
         return acc;
