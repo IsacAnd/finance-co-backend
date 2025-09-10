@@ -28,7 +28,7 @@ router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email }).select("-password");
+    const user = await User.findOne({ email });
 
     if (!user)
       return res.status(400).send({ message: "Email não cadastrado." });
@@ -37,19 +37,20 @@ router.post("/login", async (req, res) => {
 
     if (!match) return res.status(400).send({ message: "Senha incorreta." });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    // Remove o campo password antes de retornar
+  const { password: _, ...userWithoutPassword } = user.toObject();
 
-    const response = {
-      token,
-      user
-    };
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
 
-    res.status(200).json(response);
+    res.status(200).json({
+  token,
+  user: userWithoutPassword,
+  });
   } catch (error) {
     res.status(400).send(error.message);
   }
-});
+  });
 
 module.exports = router;
