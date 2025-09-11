@@ -1,9 +1,13 @@
 const mongoose = require("mongoose");
 
 const TransactionSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true
+  },
   description: {
     type: String,
-    required: true,
+    required: false,
   },
   amount: {
     type: Number,
@@ -14,9 +18,13 @@ const TransactionSchema = new mongoose.Schema({
     enum: ["income", "expense"],
     required: true,
   },
-  date: {
+  registerDate: {
     type: Date,
     default: Date.now,
+  },
+  transactionDate: {
+    type: Date,
+    required: true,
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,

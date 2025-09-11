@@ -37,12 +37,15 @@ router.delete("/:id", async (req, res) => {
 });
 
 // Criar uma transação
+// Adicionar data/título para as transações
 router.post("/", async (req, res) => {
   try {
-    const { description, amount, type } = req.body;
+    const { title, description, amount, transactionDate, type } = req.body;
     const newTransaction = new Transaction({
+      title,
       description,
       amount,
+      transactionDate,
       type,
       user: req.userId,
     });
