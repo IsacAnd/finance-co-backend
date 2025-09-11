@@ -37,17 +37,11 @@ router.post("/login", async (req, res) => {
 
     if (!match) return res.status(400).send({ message: "Senha incorreta." });
 
-    // Remove o campo password antes de retornar
-  const { password: _, ...userWithoutPassword } = user.toObject();
+    const token = jwt.sign({ id: user._id, name: user.username, email: user.email }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "1d",
-  });
-
-    res.status(200).json({
-  token,
-  user: userWithoutPassword,
-  });
+    res.status(200).json({token});
   } catch (error) {
     res.status(400).send(error.message);
   }
